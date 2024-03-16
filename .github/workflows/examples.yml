@@ -1,0 +1,48 @@
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel a currently running workflow from the same PR, branch or tag when a new workflow is
+# triggered (ref https://stackoverflow.com/a/72408109)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  polkadot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Runtimes Repo
+        uses: actions/checkout@v3
+        with:
+          repository: "polkadot-fellows/runtimes"
+
+      - name: Run Polkadot Try Runtime Checks
+        uses: "paritytech/try-runtime-gha@main"
+        with:
+          runtime-package: "polkadot-runtime"
+          # - Disable Weight Warnings because they do not apply to Relay Chains
+          # - Disable Spec Version Check because we are just running this against 'master' branch,
+          #   not an actually ready to deploy runtime
+          extra-args: "--no-weight-warnings --disable-spec-version-check"
+          node-uri: "wss://polkadot-try-runtime-node.parity-chains.parity.io:443"
+          # Try State checks are currently broken on Polkadot. So only run migration checks for now.
+          checks: "pre-and-post"
+
+  rococo-asset-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Polkadot SDK
+        uses: actions/checkout@v3
+        with:
+          repository: "paritytech/polkadot-sdk"
+
+      - name: Run Rococo Asset Hub Try Runtime Checks
+        uses: "paritytech/try-runtime-gha@main"
+        with:
+          runtime-package: "asset-hub-rococo-runtime"
+          node-uri: "wss://rococo-asset-hub-rpc.polkadot.io:443"
+          # - Disable Spec Version Check because we are just running this against 'master' branch,
+          #   not an actually ready to deploy runtime
+          extra-args: "--disable-spec-version-check"

@@ -1,0 +1,75 @@
+name: "Try Runtime GHA"
+description: "Easily check runtime migrations for a Substrate-based blockchain using try-runtime-cli"
+author: "Parity Tech"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  runtime-package:
+    description: "The runtime package name"
+    required: true
+  node-uri:
+    description: "URI of a node to scrape state"
+    required: true
+  extra-args:
+    description: 'Extra args to pass to the ''on-runtime-upgrade'' subcommand. For example, "--disable-idempotency-check --no-weight-warnings". See all options at https://paritytech.github.io/try-runtime-cli/try_runtime_core/commands/on_runtime_upgrade/struct.Command.html.'
+    default: ""
+  checks:
+    description: 'Types of checks to run. For example, "pre-and-post". See all options at https://paritytech.github.io/try-runtime-cli/frame_support/traits/enum.UpgradeCheckSelect.html.'
+    default: "all"
+  shared-cache-key:
+    description: "The shared cache key"
+    default: "try-runtime-gha"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download try-runtime-cli
+      run: |
+        curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.6.1/try-runtime-x86_64-unknown-linux-musl -o try-runtime
+        chmod +x ./try-runtime
+      shell: bash
+
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1.3.0
+      with:
+        version: "3.6.1"
+
+    - name: Add wasm32-unknown-unknown target
+      run: rustup target add wasm32-unknown-unknown
+      shell: bash
+
+    - name: Add rust-src component
+      run: rustup component add rust-src
+      shell: bash
+
+    - name: Fetch cache
+      uses: Swatinem/rust-cache@v2.7.0
+      with:
+        shared-key: ${{ inputs.shared-cache-key }}
+
+    - name: Build ${{ inputs.runtime-name }}
+      run: |
+        cargo build --profile production -p ${{ inputs.runtime-package }} --features try-runtime -q --locked
+      shell: bash
+
+    - name: Check migrations
+      run: |
+        PACKAGE_NAME=${{ inputs.runtime-package }}
+        RUNTIME_BLOB_NAME=$(echo $PACKAGE_NAME | sed 's/-/_/g').compact.compressed.wasm
+        RUNTIME_BLOB_PATH=./target/production/wbuild/$PACKAGE_NAME/$RUNTIME_BLOB_NAME
+
+        # Store the command in a variable so we can log it
+        COMMAND="./try-runtime \
+          --runtime $RUNTIME_BLOB_PATH \
+          on-runtime-upgrade --checks=${{ inputs.checks }} \
+          ${{ inputs.extra-args }} \
+          live --uri ${{ inputs.node-uri }}"
+
+        # Echo the command before running it, for debugging purposes
+        echo "Running command:"
+        echo "$COMMAND"
+        eval "$COMMAND"
+
+      shell: bash
