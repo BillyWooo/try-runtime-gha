@@ -27,7 +27,7 @@ runs:
   steps:
     - name: Download try-runtime-cli
       run: |
-        curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.6.1/try-runtime-x86_64-unknown-linux-musl -o try-runtime
+        curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.7.0/try-runtime-x86_64-unknown-linux-musl -o try-runtime
         chmod +x ./try-runtime
       shell: bash
 
@@ -64,6 +64,7 @@ runs:
         COMMAND="./try-runtime \
           --runtime $RUNTIME_BLOB_PATH \
           on-runtime-upgrade --checks=${{ inputs.checks }} \
+          --checks=all \
           ${{ inputs.extra-args }} \
           live --uri ${{ inputs.node-uri }}"
 
