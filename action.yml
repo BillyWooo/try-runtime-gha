@@ -64,7 +64,6 @@ runs:
         COMMAND="./try-runtime \
           --runtime $RUNTIME_BLOB_PATH \
           on-runtime-upgrade --checks=${{ inputs.checks }} \
-          --checks=all \
           ${{ inputs.extra-args }} \
           live --uri ${{ inputs.node-uri }}"
 
