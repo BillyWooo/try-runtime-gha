@@ -59,7 +59,7 @@ runs:
         PACKAGE_NAME=${{ inputs.runtime-package }}
         RUNTIME_BLOB_NAME=$(echo $PACKAGE_NAME | sed 's/-/_/g').compact.compressed.wasm
         RUNTIME_BLOB_PATH=./target/production/wbuild/$PACKAGE_NAME/$RUNTIME_BLOB_NAME
-        RUST_LOG=remote-ext=debug,runtime=debug
+        export RUST_LOG=remote-ext=debug,runtime=debug
 
         # Store the command in a variable so we can log it
         COMMAND="./try-runtime \
