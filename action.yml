@@ -29,6 +29,7 @@ runs:
       run: |
         curl -sL https://github.com/paritytech/try-runtime-cli/releases/download/v0.7.0/try-runtime-x86_64-unknown-linux-musl -o try-runtime
         chmod +x ./try-runtime
+        mv try-runtime parachain
       shell: bash
 
     - name: Install Protoc
@@ -51,11 +52,13 @@ runs:
 
     - name: Build ${{ inputs.runtime-name }}
       run: |
+        cd parachain
         cargo build --profile production -p ${{ inputs.runtime-package }} --features try-runtime -q --locked
       shell: bash
 
     - name: Check migrations
       run: |
+        cd parachain
         PACKAGE_NAME=${{ inputs.runtime-package }}
         RUNTIME_BLOB_NAME=$(echo $PACKAGE_NAME | sed 's/-/_/g').compact.compressed.wasm
         RUNTIME_BLOB_PATH=./target/production/wbuild/$PACKAGE_NAME/$RUNTIME_BLOB_NAME
