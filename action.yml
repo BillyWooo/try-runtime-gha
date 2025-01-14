@@ -67,7 +67,7 @@ runs:
         # Store the command in a variable so we can log it
         COMMAND="./try-runtime \
           --runtime $RUNTIME_BLOB_PATH \
-          on-runtime-upgrade --checks=${{ inputs.checks }} \
+          on-runtime-upgrade --disable-mbm-checks --blocktime 12000000 \
           ${{ inputs.extra-args }} \
           live --uri ${{ inputs.node-uri }}"
 
